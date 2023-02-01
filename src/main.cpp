@@ -39,7 +39,8 @@ std::shared_ptr<OdomChassisController> drive =
         	//{.4, 0, 0.2}, // Turn controller gains
         	//{0.001, 0, 0.0001}  // Angle controller gains (helps drive straight)
     		//)
-		.withDimensions({AbstractMotor::gearset::blue,(60.0/33.0)},{{3.25_in, 14.5_in}, imev5BlueTPR})
+		.withMaxVelocity(150)
+		.withDimensions({AbstractMotor::gearset::blue,(40.0/33.0)},{{3.375_in, 14.5_in}, imev5BlueTPR})
 		.withOdometry(StateMode::CARTESIAN)
     	.buildOdometry(); // build an odometry chassis
 
@@ -59,14 +60,22 @@ void on_center_button() {
 void initialize() {
 	catapultMotor.setBrakeMode(AbstractMotor::brakeMode(2));
 	catapultMotor.tarePosition();
-	r.reset();
+	while(!catapultLimit.get_value()){
+		catapultMotor.moveVelocity(-100);
+		//catapultVelocityControl->setTarget(-100);
+	}
+	catapultMotor.moveVelocity(0);
+	
+	
 }
 
 void disabled() {}
 
 void competition_initialize() {}
 
-void autonomous() {}
+void autonomous() {
+	drive->driveToPoint({0_ft,1_ft});
+}
 double degrees;
 std::string str;
 
