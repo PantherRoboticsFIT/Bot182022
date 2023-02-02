@@ -34,12 +34,12 @@ std::shared_ptr<OdomChassisController> drive =
 		.withMotors({-1, 2,-3}, {11, -12,13})
 		// Green gearset, 4 in wheel diam, 11.5 im wheel track
 		// 36 to 60 gear ratio
-			//.withGains(
-        	//{2, 0, 0}, // Distance controller gains
-        	//{.4, 0, 0.2}, // Turn controller gains
-        	//{0.001, 0, 0.0001}  // Angle controller gains (helps drive straight)
-    		//)
-		.withMaxVelocity(150)
+			.withGains(
+        	{0.005, 0, 0.00}, // Distance controller gains
+        	{0.002, 0.00401, 0}, // Turn controller gains  ***Lower the I value by 0.0002
+        	{0.002, 0, 0.0001}  // Angle controller gains (helps drive straight)
+    		)
+		.withMaxVelocity(200)
 		.withDimensions({AbstractMotor::gearset::blue,(40.0/33.0)},{{3.375_in, 14.5_in}, imev5BlueTPR})
 		.withOdometry(StateMode::CARTESIAN)
     	.buildOdometry(); // build an odometry chassis
@@ -53,6 +53,19 @@ std::shared_ptr<AsyncController<double, double>> catapultVelocityControl=
 	.withMotor(catapultMotor)
 	.build();
 
+void launchCatapult(){
+	while(catapultLimit.get_value()){
+		catapultMotor.moveVelocity(-100);
+	}
+	catapultMotor.moveVelocity(0);
+}
+void retractCatapult(){
+	while(!catapultLimit.get_value()){
+		catapultMotor.moveVelocity(-100);
+	}
+	catapultMotor.moveVelocity(0);
+}
+
 void on_center_button() {
 	
 }
@@ -60,11 +73,7 @@ void on_center_button() {
 void initialize() {
 	catapultMotor.setBrakeMode(AbstractMotor::brakeMode(2));
 	catapultMotor.tarePosition();
-	while(!catapultLimit.get_value()){
-		catapultMotor.moveVelocity(-100);
-		//catapultVelocityControl->setTarget(-100);
-	}
-	catapultMotor.moveVelocity(0);
+	
 	
 	
 }
@@ -74,7 +83,44 @@ void disabled() {}
 void competition_initialize() {}
 
 void autonomous() {
-	drive->driveToPoint({0_ft,1_ft});
+	retractCatapult();
+	pros::delay(500);
+	drive->driveToPoint({0_ft,1.5_in});
+	drive->waitUntilSettled();
+	rollerMotor.moveVelocity(-200);
+	pros::delay(500);
+	rollerMotor.moveVelocity(0);
+	pros::delay(500);
+	drive->driveToPoint({0_ft,-2_in},true);
+	drive->waitUntilSettled();
+	drive->turnToAngle(95_deg);
+	drive->waitUntilSettled();
+	drive->setState({0_in, 0_in, 0_deg});
+	drive->driveToPoint({0_ft,2_ft});
+	drive->waitUntilSettled();
+	drive->turnToAngle(52_deg);
+	drive->waitUntilSettled();
+	drive->setState({0_in, 0_in, 0_deg});
+	drive->driveToPoint({0_ft,10.5_ft});
+	drive->waitUntilSettled();
+	drive->setState({0_in, 0_in, 0_deg});
+	drive->turnToAngle(-50_deg);
+	drive->waitUntilSettled();
+	//drive->driveToPoint({0_ft,2_ft});
+	// pros::delay(500);
+	// drive->driveToPoint({0_ft,2_ft});
+	// drive->waitUntilSettled();
+	// drive->turnToAngle(90_deg);
+	// drive->waitUntilSettled();
+	// pros::delay(2000);
+	// drive->driveToPoint({2_ft,2_ft});
+	// drive->waitUntilSettled();
+	// drive->turnToAngle(-90_deg);
+	// drive->waitUntilSettled();
+	// pros::delay(500);
+	// launchCatapult();
+	//drive->driveToPoint({1_ft,2_ft});
+	//drive->turnToAngle(90_deg);
 }
 double degrees;
 std::string str;
